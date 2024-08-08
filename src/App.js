@@ -1,25 +1,43 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { onAuthStateChanged } from './services/authService';
+import Login from './components/Login';
+import Register from './components/Register';
+import Logout from './components/Logout';
+import ThreadList from './components/ThreadList';
+import ThreadForm from './components/ThreadForm';
+import ThreadDetail from './components/ThreadDetail';
 
-function App() {
+const App = () => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      {user ? (
+        <div>
+          <h2>Welcome, {user.email}</h2>
+          <Logout />
+          <Routes>
+            <Route path="/" element={<><ThreadForm userId={user.uid} /><ThreadList /></>} />
+            <Route path="/threads/:threadId" element={<ThreadDetail userId={user.uid} />} />
+          </Routes>
+        </div>
+      ) : (
+        <div>
+          <Routes>
+            <Route path="/" element={<><Login /><Register /></>} />
+          </Routes>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default App;
