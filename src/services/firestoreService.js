@@ -16,14 +16,15 @@ export const addThread = async (title, userId) => {
     }
 };
 
-export const addPost = async (threadId, content, userId, handleName = '名無し') => {
+export const addPost = async (threadId, content, userId, handleName = '名無し', userIdByIp) => {
     try {
         const postRef = doc(collection(firestore, `threads/${threadId}/posts`));
         await setDoc(postRef, {
             content: content,
             createdAt: serverTimestamp(),
             createdBy: userId,
-            handleName: handleName
+            handleName: handleName,
+            userIdByIp: userIdByIp
         });
         return postRef.id;
     } catch (error) {
