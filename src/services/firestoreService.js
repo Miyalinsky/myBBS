@@ -1,7 +1,7 @@
 import { collection, doc, getDoc, getDocs, query, orderBy, serverTimestamp, setDoc } from 'firebase/firestore';
 import { firestore } from '../firebase/firebaseConfig';
 
-export const addThread = async (title, userId) => {
+export const addThreadWithFirstPost = async (title, userId, content, handleName = '名無し', userIdByIp) => {
     try {
         const threadRef = doc(collection(firestore, 'threads'));
         await setDoc(threadRef, {
@@ -9,16 +9,8 @@ export const addThread = async (title, userId) => {
             createdAt: serverTimestamp(),
             createdBy: userId
         });
-        return threadRef.id;
-    } catch (error) {
-        console.error('Error adding thread: ', error);
-        throw error;
-    }
-};
 
-export const addPost = async (threadId, content, userId, handleName = '名無し', userIdByIp) => {
-    try {
-        const postRef = doc(collection(firestore, `threads/${threadId}/posts`));
+        const postRef = doc(collection(firestore, `threads/${threadRef.id}/posts`));
         await setDoc(postRef, {
             content: content,
             createdAt: serverTimestamp(),
@@ -26,9 +18,10 @@ export const addPost = async (threadId, content, userId, handleName = '名無し
             handleName: handleName,
             userIdByIp: userIdByIp
         });
-        return postRef.id;
+
+        return threadRef.id;
     } catch (error) {
-        console.error('Error adding post: ', error);
+        console.error('Error adding thread with first post: ', error);
         throw error;
     }
 };
@@ -65,6 +58,33 @@ export const getThreadTitle = async (threadId) => {
         }
     } catch (error) {
         console.error('Error getting thread title: ', error);
+        throw error;
+    }
+};
+
+export const getPostCount = async (threadId) => {
+    try {
+        const postsSnapshot = await getDocs(collection(firestore, `threads/${threadId}/posts`));
+        return postsSnapshot.size;
+    } catch (error) {
+        console.error('Error getting post count: ', error);
+        throw error;
+    }
+};
+
+export const addPost = async (threadId, content, userId, handleName = '名無し', userIdByIp) => {
+    try {
+        const postRef = doc(collection(firestore, `threads/${threadId}/posts`));
+        await setDoc(postRef, {
+            content: content,
+            createdAt: serverTimestamp(),
+            createdBy: userId,
+            handleName: handleName,
+            userIdByIp: userIdByIp
+        });
+        return postRef.id;
+    } catch (error) {
+        console.error('Error adding post: ', error);
         throw error;
     }
 };
