@@ -16,13 +16,14 @@ export const addThread = async (title, userId) => {
     }
 };
 
-export const addPost = async (threadId, content, userId) => {
+export const addPost = async (threadId, content, userId, handleName = '名無し') => {
     try {
         const postRef = doc(collection(firestore, `threads/${threadId}/posts`));
         await setDoc(postRef, {
             content: content,
             createdAt: serverTimestamp(),
-            createdBy: userId
+            createdBy: userId,
+            handleName: handleName
         });
         return postRef.id;
     } catch (error) {
@@ -44,7 +45,7 @@ export const getThreads = async () => {
 
 export const getPosts = async (threadId) => {
     try {
-        const q = query(collection(firestore, `threads/${threadId}/posts`), orderBy('createdAt', 'desc'));
+        const q = query(collection(firestore, `threads/${threadId}/posts`), orderBy('createdAt', 'asc')); // 昇順で取得
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
