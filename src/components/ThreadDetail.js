@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPosts, addPost } from '../services/firestoreService';
+import axios from 'axios';
+import crypto from 'crypto-browserify';
 
 const ThreadDetail = ({ userId }) => {
     const { threadId } = useParams();
@@ -8,25 +10,41 @@ const ThreadDetail = ({ userId }) => {
     const [content, setContent] = useState('');
     const [handleName, setHandleName] = useState('');
     const [error, setError] = useState('');
+    const [userIp, setUserIp] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchPosts = async () => {
             const posts = await getPosts(threadId);
-            setPosts(posts); // 取得した順序をそのまま使用
+            setPosts(posts);
         };
 
         fetchPosts();
+        fetchUserIp();
     }, [threadId]);
+
+    const fetchUserIp = async () => {
+        try {
+            const response = await axios.get('https://api.ipify.org?format=json');
+            setUserIp(response.data.ip);
+        } catch (error) {
+            console.error('Error fetching user IP: ', error);
+        }
+    };
+
+    const generateUserId = (ip) => {
+        return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 8);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await addPost(threadId, content, userId, handleName || '名無し');
+            const userIdByIp = generateUserId(userIp);
+            await addPost(threadId, content, userId, handleName || '名無し', userIdByIp);
             setContent('');
             setHandleName('');
             const updatedPosts = await getPosts(threadId);
-            setPosts(updatedPosts); // 取得した順序をそのまま使用
+            setPosts(updatedPosts);
         } catch (error) {
             setError(error.message);
         }
@@ -56,6 +74,7 @@ const ThreadDetail = ({ userId }) => {
                             <strong>{String(index + 1).padStart(4, '0')}</strong> {post.handleName} {new Date(post.createdAt.toDate()).toLocaleString()}
                         </div>
                         <div>{post.content}</div>
+                        <div style={{ textAlign: 'right', fontSize: 'smaller', color: 'gray' }}>ID: {post.userIdByIp}</div>
                     </li>
                 ))}
             </ul>
