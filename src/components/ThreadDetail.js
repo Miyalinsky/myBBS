@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPosts, addPost } from '../services/firestoreService';
+import { getPosts, addPost, getThreadTitle } from '../services/firestoreService';
 import axios from 'axios';
 import crypto from 'crypto-browserify';
+import './ThreadDetail.css'; // CSSファイルをインポート
 
 const ThreadDetail = ({ userId }) => {
     const { threadId } = useParams();
@@ -11,15 +12,23 @@ const ThreadDetail = ({ userId }) => {
     const [handleName, setHandleName] = useState('');
     const [error, setError] = useState('');
     const [userIp, setUserIp] = useState('');
+    const [threadTitle, setThreadTitle] = useState('');
     const navigate = useNavigate();
+    const textAreaRef = useRef(null);
 
     useEffect(() => {
-        const fetchPosts = async () => {
-            const posts = await getPosts(threadId);
-            setPosts(posts);
+        const fetchThreadData = async () => {
+            try {
+                const posts = await getPosts(threadId);
+                const title = await getThreadTitle(threadId);
+                setPosts(posts);
+                setThreadTitle(title);
+            } catch (error) {
+                console.error(error);
+            }
         };
 
-        fetchPosts();
+        fetchThreadData();
         fetchUserIp();
     }, [threadId]);
 
@@ -50,6 +59,31 @@ const ThreadDetail = ({ userId }) => {
         }
     };
 
+    const handleContentChange = (e) => {
+        setContent(e.target.value);
+        adjustTextAreaHeight(e.target);
+    };
+
+    const adjustTextAreaHeight = (textarea) => {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
+    useEffect(() => {
+        if (textAreaRef.current) {
+            adjustTextAreaHeight(textAreaRef.current);
+        }
+    }, [content]);
+
+    const escapeHtml = (unsafe) => {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
     return (
         <div>
             <button
@@ -66,21 +100,22 @@ const ThreadDetail = ({ userId }) => {
             >
                 Back
             </button>
-            <h2>Thread Detail</h2>
+            <h2>{threadTitle}</h2>
             <ul>
                 {posts.map((post, index) => (
-                    <li key={post.id}>
-                        <div>
-                            <strong>{String(index + 1).padStart(4, '0')}</strong> {post.handleName} {new Date(post.createdAt.toDate()).toLocaleString()}
+                    <li key={post.id} className="post">
+                        <div className="post-header">
+                            <div>
+                                <strong>{String(index + 1).padStart(4, '0')}</strong> {post.handleName} {new Date(post.createdAt.toDate()).toLocaleString()}
+                            </div>
+                            <div>ID: {post.userIdByIp}</div>
                         </div>
-                        <div>{post.content}</div>
-                        <div style={{ textAlign: 'right', fontSize: 'smaller', color: 'gray' }}>ID: {post.userIdByIp}</div>
+                        <div className="post-content">{escapeHtml(post.content)}</div>
                     </li>
                 ))}
             </ul>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="handle-name">Handle Name:</label>
+            <div className="form-container">
+                <form onSubmit={handleSubmit}>
                     <input
                         id="handle-name"
                         name="handleName"
@@ -90,20 +125,20 @@ const ThreadDetail = ({ userId }) => {
                         onChange={(e) => setHandleName(e.target.value)}
                         autoComplete="off"
                     />
-                </div>
-                <div>
-                    <label htmlFor="post-content">New Post:</label>
                     <textarea
                         id="post-content"
                         name="content"
                         placeholder="Write your post here..."
                         value={content}
-                        onChange={(e) => setContent(e.target.value)}
+                        onChange={handleContentChange}
+                        ref={textAreaRef}
+                        rows="1"
+                        style={{ overflow: 'hidden' }}
                     />
-                </div>
-                <button type="submit">Post</button>
-            </form>
-            {error && <p>{error}</p>}
+                    <button type="submit">Post</button>
+                </form>
+                {error && <p>{error}</p>}
+            </div>
         </div>
     );
 };

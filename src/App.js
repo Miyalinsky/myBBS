@@ -22,7 +22,7 @@ const App = () => {
     <div>
       {user ? (
         <div>
-          <h2>Welcome, {user.email}</h2>
+          {/* <h2>Welcome, {user.email}</h2> */}
           <Logout />
           <Routes>
             <Route path="/" element={<><ThreadForm userId={user.uid} /><ThreadList /></>} />

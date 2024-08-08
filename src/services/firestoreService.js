@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, query, orderBy, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, orderBy, serverTimestamp, setDoc } from 'firebase/firestore';
 import { firestore } from '../firebase/firebaseConfig';
 
 export const addThread = async (title, userId) => {
@@ -46,11 +46,25 @@ export const getThreads = async () => {
 
 export const getPosts = async (threadId) => {
     try {
-        const q = query(collection(firestore, `threads/${threadId}/posts`), orderBy('createdAt', 'asc')); // 昇順で取得
+        const q = query(collection(firestore, `threads/${threadId}/posts`), orderBy('createdAt', 'asc'));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
         console.error('Error getting posts: ', error);
+        throw error;
+    }
+};
+
+export const getThreadTitle = async (threadId) => {
+    try {
+        const threadDoc = await getDoc(doc(firestore, 'threads', threadId));
+        if (threadDoc.exists()) {
+            return threadDoc.data().title;
+        } else {
+            throw new Error('Thread not found');
+        }
+    } catch (error) {
+        console.error('Error getting thread title: ', error);
         throw error;
     }
 };
