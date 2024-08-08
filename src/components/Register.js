@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { register } from '../services/authService';
 
 const Register = () => {
@@ -6,7 +7,7 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleRegister = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             await register(email, password);
@@ -18,34 +19,27 @@ const Register = () => {
     return (
         <div>
             <h2>Register</h2>
-            <form onSubmit={handleRegister}>
-                <div>
-                    <label htmlFor="register-email">Email:</label>
-                    <input
-                        id="register-email"
-                        name="email"
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        autoComplete="email"
-                    />
-                </div>
-                <div>
-                    <label htmlFor="register-password">Password:</label>
-                    <input
-                        id="register-password"
-                        name="password"
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        autoComplete="new-password"
-                    />
-                </div>
+            <form onSubmit={handleSubmit}>
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
                 <button type="submit">Register</button>
             </form>
             {error && <p>{error}</p>}
+            <p>
+                Already have an account? <Link to="/">Login here</Link>
+            </p>
         </div>
     );
 };
