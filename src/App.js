@@ -7,6 +7,7 @@ import Logout from './components/Logout';
 import ThreadList from './components/ThreadList';
 import ThreadForm from './components/ThreadForm';
 import ThreadDetail from './components/ThreadDetail';
+import { startPolling } from './services/pollingService';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -14,6 +15,9 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged((user) => {
       setUser(user);
+      if (user) {
+        startPolling(user.uid); // ユーザーがログインしたらポーリングを開始
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -22,7 +26,6 @@ const App = () => {
     <div>
       {user ? (
         <div>
-          {/* <h2>Welcome, {user.email}</h2> */}
           <Logout />
           <Routes>
             <Route path="/" element={<><ThreadForm userId={user.uid} /><ThreadList /></>} />

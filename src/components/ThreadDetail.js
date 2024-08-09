@@ -120,7 +120,7 @@ const ThreadDetail = ({ userId }) => {
                         id="handle-name"
                         name="handleName"
                         type="text"
-                        placeholder="Handle Name (Optional)"
+                        placeholder="名前（省略化）"
                         value={handleName}
                         onChange={(e) => setHandleName(e.target.value)}
                         autoComplete="off"
@@ -128,7 +128,7 @@ const ThreadDetail = ({ userId }) => {
                     <textarea
                         id="post-content"
                         name="content"
-                        placeholder="Write your post here..."
+                        // placeholder="Write your post here..."
                         value={content}
                         onChange={handleContentChange}
                         ref={textAreaRef}
