@@ -28,7 +28,7 @@ const App = () => {
         <div>
           <Logout />
           <Routes>
-            <Route path="/" element={<><ThreadForm userId={user.uid} /><ThreadList /></>} />
+            <Route path="/" element={<><ThreadForm userId={user.uid} /><ThreadList userId={user.uid} /></>} />
             <Route path="/thread/:threadId" element={<ThreadDetail userId={user.uid} />} />
           </Routes>
         </div>

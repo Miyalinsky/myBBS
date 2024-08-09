@@ -1,5 +1,25 @@
-import { collection, doc, getDoc, getDocs, query, orderBy, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, orderBy, serverTimestamp, setDoc, deleteDoc } from 'firebase/firestore';
 import { firestore } from '../firebase/firebaseConfig';
+
+// スレッドを削除する関数
+export const deleteThread = async (threadId) => {
+    try {
+        await deleteDoc(doc(firestore, 'threads', threadId));
+    } catch (error) {
+        console.error('Error deleting thread: ', error);
+        throw error;
+    }
+};
+
+// レスを削除する関数
+export const deletePost = async (threadId, postId) => {
+    try {
+        await deleteDoc(doc(firestore, `threads/${threadId}/posts`, postId));
+    } catch (error) {
+        console.error('Error deleting post: ', error);
+        throw error;
+    }
+};
 
 export const addThreadWithFirstPost = async (title, userId, content, handleName = '名無し', userIdByIp) => {
     try {
