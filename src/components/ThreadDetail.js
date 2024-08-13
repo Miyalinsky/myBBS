@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPosts, addPost, getThreadTitle } from '../services/firestoreService';
+import { getPosts, addPost, getThreadTitle, deletePost } from '../services/firestoreService';
+import { checkIfUserIsAdmin } from '../services/authService';
 import axios from 'axios';
 import crypto from 'crypto-browserify';
-import './ThreadDetail.css'; // CSSファイルをインポート
+import './ThreadDetail.css';
 
 const ThreadDetail = ({ userId }) => {
     const { threadId } = useParams();
@@ -13,6 +14,8 @@ const ThreadDetail = ({ userId }) => {
     const [error, setError] = useState('');
     const [userIp, setUserIp] = useState('');
     const [threadTitle, setThreadTitle] = useState('');
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [anchorPost, setAnchorPost] = useState(null); // ポップアップで表示するレス
     const navigate = useNavigate();
     const textAreaRef = useRef(null);
 
@@ -21,8 +24,10 @@ const ThreadDetail = ({ userId }) => {
             try {
                 const posts = await getPosts(threadId);
                 const title = await getThreadTitle(threadId);
+                const isAdminUser = await checkIfUserIsAdmin(userId);
                 setPosts(posts);
                 setThreadTitle(title);
+                setIsAdmin(isAdminUser);
             } catch (error) {
                 console.error(error);
             }
@@ -30,7 +35,7 @@ const ThreadDetail = ({ userId }) => {
 
         fetchThreadData();
         fetchUserIp();
-    }, [threadId]);
+    }, [threadId, userId]);
 
     const fetchUserIp = async () => {
         try {
@@ -59,6 +64,18 @@ const ThreadDetail = ({ userId }) => {
         }
     };
 
+    const handleDeletePost = async (postId) => {
+        if (isAdmin) {
+            if (window.confirm("本当にこのレスを削除しますか？")) {
+                await deletePost(threadId, postId);
+                const updatedPosts = await getPosts(threadId);
+                setPosts(updatedPosts);
+            }
+        } else {
+            alert("この操作を行う権限がありません。");
+        }
+    };
+
     const handleContentChange = (e) => {
         setContent(e.target.value);
         adjustTextAreaHeight(e.target);
@@ -84,6 +101,47 @@ const ThreadDetail = ({ userId }) => {
             .replace(/'/g, "&#039;");
     };
 
+    // アンカーリンクをパースしてリンクに変換
+    const parseAnchors = (text) => {
+        const anchorPattern = /&gt;&gt;(\d+)/g;
+        const parsedText = text.replace(anchorPattern, (match, p1) => {
+            const postNumber = parseInt(p1, 10);
+            return `<a href="#" class="anchor-link" data-post-number="${postNumber}">${match}</a>`;
+        });
+        // console.log("Parsed Text:", parsedText); // デバッグ用ログ
+        return parsedText;
+    };
+
+    // const handleAnchorClick = (e, postNumber) => {
+    //     e.preventDefault();
+    //     // console.log("Anchor clicked, post number:", postNumber); // 追加: ログを出力
+    //     const targetPost = posts.find((post, index) => index + 1 === postNumber);
+    //     if (targetPost) {
+    //         // console.log("Target post found:", targetPost); // 追加: ターゲットポストのログ
+    //         setAnchorPost(targetPost);
+    //     }
+    // };
+
+    const handleAnchorClick = (e, postNumber) => {
+        e.preventDefault();
+        const targetPost = posts.find((post, index) => index + 1 === postNumber);
+        if (targetPost) {
+            setAnchorPost({
+                post: targetPost,
+                position: {
+                    x: e.clientX,
+                    y: e.clientY
+                }
+            });
+        }
+    };
+
+
+
+    const handleCloseAnchor = () => {
+        setAnchorPost(null);
+    };
+
     return (
         <div>
             <button
@@ -104,16 +162,64 @@ const ThreadDetail = ({ userId }) => {
             <ul>
                 {posts.map((post, index) => (
                     <li key={post.id} className="post">
-                        <div className="post-header">
+                        <div className="post-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <div>
                                 <strong>{String(index + 1).padStart(4, '0')}</strong> {post.handleName} {new Date(post.createdAt.toDate()).toLocaleString()}
                             </div>
                             <div>ID: {post.userIdByIp}</div>
                         </div>
-                        <div className="post-content">{escapeHtml(post.content)}</div>
+                        <div
+                            className="post-content"
+                            dangerouslySetInnerHTML={{ __html: parseAnchors(escapeHtml(post.content)) }}
+                            onClick={(e) => {
+                                if (e.target.className === 'anchor-link') {
+                                    handleAnchorClick(e, parseInt(e.target.getAttribute('data-post-number'), 10));
+                                }
+                            }}
+                        />
+                        {isAdmin && (
+                            <button
+                                onClick={() => handleDeletePost(post.id)}
+                                style={{ display: 'block', marginLeft: 'auto', backgroundColor: 'red', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px' }}
+                            >
+                                レスを削除
+                            </button>
+                        )}
                     </li>
                 ))}
             </ul>
+            {anchorPost && (
+                <div
+                    className="anchor-popup"
+                    style={{
+                        position: 'absolute',
+                        top: `${anchorPost.position.y}px`,
+                        left: `${anchorPost.position.x}px`,
+                        transform: 'translate(10px, 10px)',  // 少し下・右にずらす
+                        backgroundColor: 'white',
+                        border: '1px solid #ccc',
+                        padding: '10px',
+                        boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+                        zIndex: 1000,
+                        width: '300px',
+                        borderRadius: '5px',
+                    }}
+                >
+                    <div className="anchor-popup-header">
+                        <button onClick={handleCloseAnchor}>[閉じる]</button>
+                    </div>
+                    <div className="anchor-popup-content">
+                        <div className="post-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <div>
+                                <strong>{posts.indexOf(anchorPost.post) + 1}</strong> {anchorPost.post.handleName} {new Date(anchorPost.post.createdAt.toDate()).toLocaleString()}
+                            </div>
+                            <div>ID: {anchorPost.post.userIdByIp}</div>
+                        </div>
+                        <div className="post-content">{escapeHtml(anchorPost.post.content)}</div>
+                    </div>
+                </div>
+            )}
+
             <div className="form-container">
                 <form onSubmit={handleSubmit}>
                     <input
@@ -128,7 +234,6 @@ const ThreadDetail = ({ userId }) => {
                     <textarea
                         id="post-content"
                         name="content"
-                        // placeholder="Write your post here..."
                         value={content}
                         onChange={handleContentChange}
                         ref={textAreaRef}

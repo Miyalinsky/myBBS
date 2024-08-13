@@ -1,39 +1,38 @@
-import { generateThreadOrPost } from './openaiService';
+import { generateThreadWithFirstPost, generateReplyPost } from './openaiService';
 import { addThreadWithFirstPost, addPost, getThreads } from './firestoreService';
 
 export const startPolling = (userId) => {
     setInterval(async () => {
         try {
             const threads = await getThreads();
-            const shouldCreateThread = Math.random() < 0.1;
+            const shouldCreateThread = Math.random() < 0.05;
 
             if (shouldCreateThread) {
-                const threadTitlePrompt = '5chの掲示板で使われるようなカジュアルな会話スタイルで、5chのスレッドを参考に、新しいスレッドのタイトルを作成してください。文頭に「回答：」や「返信：」といった形式的な言葉は使わないでください。';
-                const threadContentPrompt = '5chの掲示板で使われるようなカジュアルな会話スタイルで、スレッドタイトルに沿った最初のレスを生成してください。文頭に「回答：」や「返信：」といった形式的な言葉は使わないでください。';
-                const title = await generateThreadOrPost(threadTitlePrompt);
-                const content = await generateThreadOrPost(threadContentPrompt);
+                // 新しいスレッドを立てる
+                const { title, post } = await generateThreadWithFirstPost();
 
                 const userIp = '0.0.0.0';
                 const handleName = 'AI Bot';
-                const userIdByIp = generateUserId(userIp); // generateUserIdを使用
+                const userIdByIp = generateUserId(userIp);
 
-                await addThreadWithFirstPost(title, userId, content, handleName, userIdByIp);
+                await addThreadWithFirstPost(title, userId, post, handleName, userIdByIp);
             } else {
+                // 既存のスレッドにレスを追加する
                 const randomThreadIndex = Math.floor(Math.random() * threads.length);
                 const threadId = threads[randomThreadIndex].id;
-                const postPrompt = '5chの掲示板で使われるようなカジュアルな会話スタイルで、次の内容に返信を書いてください。文頭に「回答：」や「返信：」といった形式的な言葉は使わないでください。';
-                const content = await generateThreadOrPost(postPrompt, threadId);
+                const postPrompt = 'このスレッドに対する適切な返信を簡潔に生成してください。5chのように煽り合いや殺伐とした雰囲気が欲しいです。';
+                const content = await generateReplyPost(postPrompt, threadId);
 
                 const userIp = '0.0.0.0';
                 const handleName = 'AI Bot';
-                const userIdByIp = generateUserId(userIp); // generateUserIdを使用
+                const userIdByIp = generateUserId(userIp);
 
                 await addPost(threadId, content, userId, handleName, userIdByIp);
             }
         } catch (error) {
             console.error('Error in polling:', error);
         }
-    }, 600000); //10分に1回ポーリング
+    }, 600000); // 1分ごとにポーリング
 };
 
 function simpleHash(input) {
@@ -41,7 +40,7 @@ function simpleHash(input) {
     for (let i = 0; i < input.length; i++) {
         const char = input.charCodeAt(i);
         hash = (hash << 5) - hash + char;
-        hash = hash & hash; // 32bit intに変換
+        hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash).toString(16); // 正の整数にして16進数に変換
 }
