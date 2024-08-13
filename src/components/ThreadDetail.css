@@ -25,7 +25,6 @@ ul {
 .post-content {
     margin-top: 10px;
     white-space: pre-wrap;
-    /* ここで改行を反映させる */
 }
 
 /* 投稿フォームのスタイル */
@@ -38,7 +37,6 @@ ul {
 
 .form-container form {
     width: 90%;
-    /* max-width: 600px; */
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -61,4 +59,33 @@ ul {
     cursor: pointer;
     align-self: center;
     width: 90%;
+}
+
+/* アンカーのポップアップスタイル */
+.anchor-popup {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    top: 50px;
+    right: 50px;
+    width: 300px;
+    border-radius: 5px;
+}
+
+.anchor-popup-header {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.anchor-popup-content {
+    margin-top: 10px;
+}
+
+.anchor-link {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
 }
