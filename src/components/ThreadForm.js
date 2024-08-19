@@ -46,20 +46,19 @@ const ThreadForm = ({ userId }) => {
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
-                    placeholder="Thread Title"
+                    placeholder="スレッドタイトル"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
                 />
                 <input
                     type="text"
-                    placeholder="Handle Name (Optional)"
+                    placeholder="名前（省略可）"
                     value={handleName}
                     onChange={(e) => setHandleName(e.target.value)}
                     autoComplete="off"
                 />
                 <textarea
-                    placeholder="Write your post here..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     required

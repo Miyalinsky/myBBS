@@ -18,7 +18,7 @@ const Register = () => {
 
     return (
         <div>
-            <h2>Register</h2>
+            <h2>アカウント登録</h2>
             <form onSubmit={handleSubmit}>
                 <input
                     type="email"
@@ -38,7 +38,7 @@ const Register = () => {
             </form>
             {error && <p>{error}</p>}
             <p>
-                Already have an account? <Link to="/">Login here</Link>
+                既にアカウントを持っていますか? <Link to="/">ログインする</Link>
             </p>
         </div>
     );

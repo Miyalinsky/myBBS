@@ -30,6 +30,8 @@ const App = () => {
           <Routes>
             <Route path="/" element={<><ThreadForm userId={user.uid} /><ThreadList userId={user.uid} /></>} />
             <Route path="/thread/:threadId" element={<ThreadDetail userId={user.uid} />} />
+            {/* デフォルトルートを設定 */}
+            <Route path="*" element={<ThreadList userId={user.uid} />} />
           </Routes>
         </div>
       ) : (
@@ -37,6 +39,8 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            {/* デフォルトルートを設定 */}
+            <Route path="*" element={<Login />} />
           </Routes>
         </div>
       )}
