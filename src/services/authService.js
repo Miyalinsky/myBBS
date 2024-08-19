@@ -1,7 +1,24 @@
 import { auth } from '../firebase/firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged as firebaseOnAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from '../firebase/firebaseConfig';
+
+// ユーザードキュメントを作成する関数
+const createUserDocument = async (user) => {
+    if (!user) return;
+
+    const userDocRef = doc(firestore, "users", user.uid);
+
+    try {
+        await setDoc(userDocRef, {
+            email: user.email,
+            isAdmin: false, // 初期状態では管理者フラグをfalseに設定
+        });
+        console.log("User document created successfully");
+    } catch (error) {
+        console.error("Error creating user document: ", error);
+    }
+};
 
 // ユーザーが管理者かどうかを確認する関数
 export const checkIfUserIsAdmin = async (userId) => {
@@ -23,9 +40,11 @@ export const checkIfUserIsAdmin = async (userId) => {
     }
 };
 
-// 既存の認証関連関数
-export const register = (email, password) => {
-    return createUserWithEmailAndPassword(auth, email, password);
+// ユーザー登録時にFireStoreにドキュメントを作成する処理を追加
+export const register = async (email, password) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await createUserDocument(userCredential.user);  // 登録時にユーザーのドキュメントを作成
+    return userCredential;
 };
 
 export const login = (email, password) => {

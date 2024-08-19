@@ -18,7 +18,7 @@ const Login = () => {
 
     return (
         <div>
-            <h2>Login</h2>
+            <h2>ログイン</h2>
             <form onSubmit={handleSubmit}>
                 <input
                     type="email"
@@ -38,7 +38,7 @@ const Login = () => {
             </form>
             {error && <p>{error}</p>}
             <p>
-                Don't have an account? <Link to="/register">Register here</Link>
+                アカウントを持っていませんか? <Link to="/register">登録する</Link>
             </p>
         </div>
     );
