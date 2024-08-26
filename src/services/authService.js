@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, on
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from '../firebase/firebaseConfig';
 
-// ユーザードキュメントを作成する関数
+// アカウント登録された際にFirestoreにユーザードキュメントを作成する関数
 const createUserDocument = async (user) => {
     if (!user) return;
 
@@ -20,7 +20,7 @@ const createUserDocument = async (user) => {
     }
 };
 
-// ユーザーが管理者かどうかを確認する関数
+// ユーザードキュメントからユーザーが管理者かどうかを確認する関数
 export const checkIfUserIsAdmin = async (userId) => {
     if (!userId) {
         console.error("User ID is undefined or null.");

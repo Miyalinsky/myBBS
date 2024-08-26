@@ -32,7 +32,7 @@ export const startPolling = (userId) => {
         } catch (error) {
             console.error('Error in polling:', error);
         }
-    }, 600000); // 1分ごとにポーリング
+    }, 1000000); // 1分ごとにポーリング
 };
 
 function simpleHash(input) {
